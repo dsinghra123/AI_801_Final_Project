@@ -1,3 +1,6 @@
+###############################################################################
+# Load all necessary libraries for the analysis
+
 import cv2
 import glob
 import h5py
@@ -11,6 +14,8 @@ import shutil
 import tensorflow as tf
 import time
 
+import skimage.measure
+import imghdr
 import skimage as sk
 from skimage import util, io, transform
 
@@ -29,6 +34,10 @@ from mpl_toolkits.axes_grid1 import ImageGrid
 from scipy import ndarray
 from sklearn.model_selection import train_test_split
 from sklearn.metrics import confusion_matrix, classification_report
+from difPy import dif
+
+###############################################################################
+# Identify all directories for the analysis
 
 # Parent directory path.  This directory is the parent directory for the entire project and likely the working directory 
 os.chdir('D:/School_Files/AI_801/Project/final_project_git')
@@ -72,26 +81,25 @@ for k, char in map_birds.items():
     
 print('Total number of images not equal to (224, 224, 3) = ' + str(sum(x != (224, 224, 3) for x in image_size)))
 
+# Identify if duplicate images are present in the dataset
+dup_images = []
+for k, char in map_birds.items():
+    search = dif(image_dir + '/train/%s/' % char)
+    dup_images.append(search.result)
+    
+    
+filtered = filter(lambda Total_Dups: dup_images.Size >= 1, dup_images)
+print(list(filtered))
+
 ##############################################################################
-
-
-
-
-
-
-
-
-
-
+# Identify all fixed variables that will be used in the functions below
 
 pic_size = 128 #The size that each image will be modified to
 batch_size = 32 #The batch size the images will be fed through the model
 epochs = 50 #The number of epochs that will be run
 num_classes = len(map_birds) #The number of classes for the analysis (number of characters)
-#val_size = 0.20 #Size of the validation set as proportion of all images per character
-#train_images = 2000 #Number of images in the training set for each character
-#test_images = 300 #Number of images in the test set for each character
-#pictures_per_class = 2000 #Number of images for each character
+
+##############################################################################
 
 def load_pictures(BGR):
 
@@ -190,7 +198,6 @@ def get_dataset(save=False, load=False, BGR=False):
             for k,v in sorted(dist.items(), key=lambda x:x[1][0], reverse=True)]))
     return X_train, X_val, X_test, y_train, y_val, y_test
 
-
 def create_model_six_conv(input_shape):
     """
     CNN Keras model with 6 convolutions.
@@ -274,10 +281,14 @@ def training(model, X_train, X_val, y_train, y_val, best_weights_path, data_augm
     return model, history
 
 if __name__ == '__main__':
-    X_train, X_val, X_test, y_train, y_val, y_test = get_dataset(save=True)
-    model, opt = create_model_six_conv(X_train.shape[1:])
+    X_train, X_val, X_test, y_train, y_val, y_test = get_dataset(load=True)
+    model, opt = load_model_from_checkpoint(best_weights_path)
     model, history = training(model, X_train, X_val, y_train, y_val, best_weights_path = best_weights_path, data_augmentation=True)
- 
+
+
+imgplot = plt.imshow(X_test[2])
+plt.show()
+
 ##############################################################################
 #KERAS TUNER
 
@@ -360,6 +371,8 @@ tuner.search(X_train,y_train, epochs=50, validation_data=(X_test,y_test), callba
 # Get the optimal hyperparameters
 best_hps=tuner.get_best_hyperparameters(num_trials=1)[0]
 
+##############################################################################
+# New model based on the results from Keras Tuner
 
 def tuned_model_six_conv(input_shape):
     """
@@ -404,11 +417,29 @@ if __name__ == '__main__':
     X_train, X_val, X_test, y_train, y_val, y_test = get_dataset(save=True)
     model, opt = tuned_model_six_conv(X_train.shape[1:])
     model, history = training(model, X_train, X_val, y_train, y_val, best_weights_path = best_weights_path, data_augmentation=True)
+      
+##############################################################################
+# Ceate image matrix with percentages
 
+F = plt.figure(1, (15,20))
+grid = ImageGrid(F, 111, nrows_ncols=(6, 6), axes_pad=0, label_mode="1")
 
-
-
-
+for i in range(36):
+    char = map_birds[i]
+    image = cv2.imread(np.random.choice([k for k in glob.glob(image_dir + '/train/%s/*' % char) if char in k]))
+    img = cv2.cvtColor(image, cv2.COLOR_BGR2RGB)
+    pic = cv2.resize(image, (pic_size, pic_size)).astype('float32') / 255.
+    a = model.predict(pic.reshape(1, pic_size, pic_size, 3))[0]
+    actual = char.split('_')[0].title()
+    text = sorted(['{:s} : {:.1f}%'.format(map_birds[k].split('_')[0].title(), 100*v) for k,v in enumerate(a)], 
+       key=lambda x:float(x.split(':')[1].split('%')[0]), reverse=True)[:3]
+    img = cv2.resize(img, (352, 352))
+    cv2.rectangle(img, (0,260),(215,352),(255,255,255), -1)
+    font = cv2.FONT_HERSHEY_SIMPLEX
+    cv2.putText(img, 'Actual : %s' % actual, (10, 280), font, 0.7,(0,0,0),2,cv2.LINE_AA)
+    for k, t in enumerate(text):
+        cv2.putText(img, t,(10, 300+k*18), font, 0.65,(0,0,0),2,cv2.LINE_AA)
+    grid[i].imshow(img)
 
 #EVERYTHING BELOW HERE IS FOR IMAGE AUGMENTATION       
 ##############################################################################
@@ -465,7 +496,6 @@ for k, char in map_birds.items():
         
        
 ##############################################################################
-        
 
 def image_augmentation(train_images = train_images, test_images = test_images):
     # Check if augmented directory exists
@@ -548,3 +578,39 @@ def image_augmentation(train_images = train_images, test_images = test_images):
                         num_generated_files += 1
                 else:
                     print(folder_path, "already exists.")
+                    
+                    
+                    
+#############################################################################
+
+# Function that searches the folder for image files, converts them to a tensor
+def create_imgs_matrix(directory, px_size=50):
+    global image_files   
+    image_files = []
+    # create list of all files in directory     
+    folder_files = [filename for filename in os.listdir(directory)]  
+    
+    # create images matrix   
+    counter = 0
+    for filename in folder_files: 
+        # check if the file is accesible and if the file format is an image
+        if not os.path.isdir(directory + filename) and imghdr.what(directory + filename):
+            # decode the image and create the matrix
+            img = cv2.imdecode(np.fromfile(directory + filename, dtype=np.uint8), cv2.IMREAD_UNCHANGED)
+            if type(img) == np.ndarray:
+                img = img[...,0:3]
+                # resize the image based on the given compression value
+                img = cv2.resize(img, dsize=(px_size, px_size), interpolation=cv2.INTER_CUBIC)
+                if counter == 0:
+                    imgs_matrix = img
+                    image_files.append(filename)
+                    counter += 1
+                else:
+                    imgs_matrix = np.concatenate((imgs_matrix, img))
+                    image_files.append(filename)
+    return imgs_matrix
+
+for k, char in map_birds.items():
+        test = [k for k in glob.glob(image_dir + '/train/%s/*' % char)]
+        imghdr.what(test, h=None)
+        
