@@ -7,10 +7,17 @@ __pycache__/
 /additional_files
 /data
 /images_to_test
-/best_weights_6conv_birds.hdf5
 /dataset.h5
 /labels.h5
 /my_dir/
+/efficient/
+/birds_augmented/
+/keras_tuner_results/
+/best_weights_6conv_birds.hdf5
+/best_weights_6conv_birds_tuned.hdf5
+/best_weights_6conv_birds_RGB.hdf5
+/birds_3.py
+
 
 
 # C extensions
