@@ -16,6 +16,7 @@ __pycache__/
 /best_weights_6conv_birds.hdf5
 /best_weights_6conv_birds_tuned.hdf5
 /best_weights_6conv_birds_RGB.hdf5
+/best_weights_6conv_birds_EN.hdf5
 /birds_3.py
 
 
