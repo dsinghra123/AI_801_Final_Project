@@ -1,0 +1,38 @@
+<MyLayout>
+    id: my_widget
+    BoxLayout:
+        
+        orientation: "vertical"
+        size: root.width, root.height
+        
+        padding: 50
+        spacing: 20
+
+
+        Image:
+            id: result_image
+            source: ""
+            
+        Button:
+            id: load_image
+            text: 'Load Image'
+            on_release: my_widget.show_load()
+
+<LoadDialog>:
+    BoxLayout:
+        size: root.size
+        pos: root.pos
+        orientation: "vertical"
+        FileChooserIconView:
+            id: filechooser
+
+        BoxLayout:
+            size_hint_y: None
+            height: 30
+            Button:
+                text: "Cancel"
+                on_release: root.cancel()
+
+            Button:
+                text: "Load"
+                on_release: root.load(filechooser.path, filechooser.selection)
