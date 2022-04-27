@@ -9,6 +9,7 @@ import numpy as np
 import os
 import shutil
 import tensorflow as tf
+import pyperclip
 
 import keras
 
@@ -686,14 +687,23 @@ import matplotlib.pyplot as plt
 import keras
 import cv2
 import glob
+import csv
+import os
+
+# Parent directory path.  This directory is the parent directory for the entire project and likely the working directory 
+os.chdir('D:/School_Files/AI_801/Project/final_project_git')
+
+map_birds = {}        
+with open('Names.csv') as csv_file:
+    reader = csv.reader(csv_file)
+    map_birds = dict(reader)
+    
+map_birds = {int(k):str(v) for k,v in map_birds.items()}
 
 app_image = './app_image/'
 best_model_save = "./model_birds.hdf5"
 
 pic_size = 224 #The size that each image will be modified to
-
-# Create dictionary that provides key and name of each folder in the master image directory
-map_birds = dict(list(enumerate([os.path.basename(x) for x in glob.glob(image_dir + '/train/*')])))
     
 model = keras.models.load_model(best_model_save)
 
@@ -711,3 +721,6 @@ for file in glob.glob(app_image + '*.jpg'):
         cv2.putText(image_RGB, t,(10, 300+k*18), font, 0.50,(0,0,0),2,cv2.LINE_AA)
         plt.imshow(image_RGB)
     plt.show()
+    
+    
+            

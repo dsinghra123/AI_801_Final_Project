@@ -19,8 +19,10 @@ __pycache__/
 /best_weights_6conv_birds_RGB.hdf5
 /best_weights_6conv_birds_EN.hdf5
 /birds_3.1.py
-
-
+/birds_3.py
+/birds_3_initial.py
+/model_birds.hdf5
+/old_code/
 
 # C extensions
 *.so
