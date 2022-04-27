@@ -4,14 +4,25 @@ __pycache__/
 *$py.class
 
 # Additional Files
-/additional_files
-/data
-/images_to_test
-/best_weights_6conv_birds.hdf5
+/additional_files/
+/data/
+/images_to_test/
 /dataset.h5
 /labels.h5
 /my_dir/
-
+/efficient/
+/birds_augmented/
+/app_image/
+/keras_tuner_results/
+/best_weights_6conv_birds.hdf5
+/best_weights_6conv_birds_tuned.hdf5
+/best_weights_6conv_birds_RGB.hdf5
+/best_weights_6conv_birds_EN.hdf5
+/birds_3.1.py
+/birds_3.py
+/birds_3_initial.py
+/model_birds.hdf5
+/old_code/
 
 # C extensions
 *.so
