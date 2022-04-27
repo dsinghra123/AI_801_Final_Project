@@ -1,5 +1,17 @@
+#:set backcolor 0.2, 0.6, 1, 1
+#:set buttoncolor 1, 1, 1, 1
+#:set fontcolor 0, 0, 0, 1
+
+#:set imagesize 350
+
 <MyLayout>
     id: my_widget
+    canvas.before:
+        Color:
+            rgba: backcolor
+        Rectangle:
+            pos: self.pos
+            size: self.size
     BoxLayout:
         
         orientation: "vertical"
@@ -11,12 +23,17 @@
 
         Image:
             id: result_image
+            color: backcolor
             source: ""
             
         Button:
             id: load_image
             text: 'Load Image'
+            color: fontcolor
+            background_normal: ''
+            background_color: buttoncolor
             on_release: my_widget.show_load()
+            
 
 <LoadDialog>:
     BoxLayout:

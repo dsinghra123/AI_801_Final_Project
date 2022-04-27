@@ -19,6 +19,7 @@ from tensorflow.keras.models import load_model
 import cv2
 import glob    
 import os
+import csv
 
 # Directory to master image file
 image_dir = './data/' 
@@ -26,8 +27,17 @@ num_classes = 375
 pic_size = 224 #The size that each image will be modified to
 batch_size = 32 #The batch size the images will be fed through the model
 epochs = 30 #The number of epochs that will be run
+
 # Create dictionary that provides key and name of each folder in the master image directory
-map_birds = dict(list(enumerate([os.path.basename(x) for x in glob.glob(image_dir + '/train/*')])))
+map_birds = {}       
+with open('Names.csv') as csv_file:
+    reader = csv.reader(csv_file)
+    temp_map_birds = dict(reader)
+# There might be a better way to do this but we need to convert the string 
+#  keys in the dict to ints so that the search later works correctly
+for key in temp_map_birds:
+    map_birds[int(key)] = temp_map_birds[key]
+    
 num_classes = len(map_birds) #The number of classes for the analysis (number of characters)
 train_images = 120
   
@@ -38,10 +48,7 @@ def generateResults(imagePath=''):
     best_model_save = "./model_birds.hdf5"
     
     pic_size = 224 #The size that each image will be modified to
-    
-    # Create dictionary that provides key and name of each folder in the master image directory
-    map_birds = dict(list(enumerate([os.path.basename(x) for x in glob.glob(image_dir + '/train/*')])))
-        
+
     model = load_model(best_model_save)
     
     if(imagePath!=''):
@@ -81,11 +88,10 @@ class MyLayout(Widget):
         
     def load(self, path, filename):
         data = cv2.flip(generateResults(filename[0]), 0)
-        print(data.size)
         flatBuf = data.flatten()
-        print(flatBuf)
         texture = Texture.create(size=(350, 350), colorfmt='rgb')
         texture.blit_buffer(flatBuf, bufferfmt="float", colorfmt='rgb')
+        self.ids.result_image.color = (1, 1, 1, 1)
         self.ids.result_image.texture = texture
 
         self.dismiss_popup()
